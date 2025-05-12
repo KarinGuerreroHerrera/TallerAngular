@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Serie } from './serie';
-import { SerieService } from './serie.service'
+import { SerieService } from './serie.service';
 
 @Component({
   selector: 'app-serie',
@@ -10,36 +10,46 @@ import { SerieService } from './serie.service'
 })
 export class SerieComponent implements OnInit {
 
-  series: Array<Serie> = [];
-  promedio_series: number = 0;
-  selectedSerie: Serie | null = null;
+  listaSeries: Serie[] = [];
+  promedioTemporadas: number = 0;
+  serieSeleccionada: Serie | null = null;
 
-  constructor(private serieService: SerieService) { }
+  constructor(private servicioSeries: SerieService) {}
 
-  getSeries() {
-    this.serieService.getSeries().subscribe({
-      next: (series) => {
-        this.series = series;
-        this.calculateSeasonsAverage();
+  ngOnInit(): void {
+    this.cargarSeries();
+  }
+
+  cargarSeries(): void {
+    this.servicioSeries.getSeries().subscribe({
+      next: (datos) => {
+        this.listaSeries = datos;
+        this.actualizarPromedioTemporadas();
       },
-      error: (error) => {
-        console.error('Error fetching series:', error);
+      error: (e) => {
+        console.error('No se pudieron cargar las series:', e);
       }
     });
   }
 
-  calculateSeasonsAverage() {
-    if (this.series.length === 0) return;
-    
-    const totalSeasons = this.series.reduce((sum, serie) => sum + serie.seasons, 0);
-    this.promedio_series = Number((totalSeasons / this.series.length).toFixed(2));
+  actualizarPromedioTemporadas(): void {
+    const cantidadSeries = this.listaSeries.length;
+
+    if (cantidadSeries === 0) {
+      this.promedioTemporadas = 0;
+      return;
+    }
+
+    const sumaTemporadas = this.listaSeries
+      .map(s => s.seasons)
+      .reduce((acumulado, actual) => acumulado + actual, 0);
+
+    this.promedioTemporadas = parseFloat((sumaTemporadas / cantidadSeries).toFixed(2));
   }
 
-  onSeriesClick(serie: Serie) {
-    this.selectedSerie = serie;
+  seleccionarSerie(serie: Serie): void {
+    this.serieSeleccionada = serie;
   }
 
-  ngOnInit() {
-    this.getSeries();
-  }
 }
+
